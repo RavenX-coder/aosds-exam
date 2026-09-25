@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AOSDS 考試 AOSDS Examination</title>
+<style>
+:root{
+  --green-dark:#0e5c3f;
+  --green:#1c7a4f;
+  --green-light:#2f9c66;
+  --navy:#132a3a;
+  --panel:#5c7f92;
+  --bg:#e9edf0;
+  --card:#ffffff;
+  --ink:#1c2b33;
+  --muted:#6b7c85;
+  --amber:#f0ad2e;
+  --red:#d64545;
+  --line:#d7dee2;
+  font-family:-apple-system,"Segoe UI","PingFang HK","Microsoft JhengHei",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);height:100%;}
+body{
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  touch-action:manipulation;
+  -webkit-text-size-adjust:100%;
+}
+#app{max-width:900px;width:100%;margin:0 auto;display:flex;flex-direction:column;min-height:100vh;background:var(--bg);}
+
+/* ---------- Header ---------- */
+.hdr{
+  background:linear-gradient(135deg,var(--green-dark),var(--green-light));
+  color:#fff;
+  padding:12px 14px 10px;
+  flex-shrink:0;
+}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.hdr-titles{min-width:0;flex:1;}
+.hdr-titles h1{font-size:clamp(14px,4.2vw,17px);margin:0 0 1px;font-weight:700;letter-spacing:.3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-titles p{font-size:11px;margin:0;opacity:.88;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.finish-btn{
+  background:#dfe3e6;color:#8a9199;border:none;font-size:12.5px;font-weight:700;
+  padding:8px 12px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:4px;
+  white-space:nowrap;min-height:36px;
+}
+.finish-btn.enabled{background:#2fae5a;color:#ffffff;cursor:pointer;}
+.finish-btn.hidden{display:none !important;}
+.back-btn{
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.4);
+  color:#fff;font-size:12.5px;font-weight:700;
+  padding:8px 11px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:3px;
+  white-space:nowrap;min-height:36px;
+}
+.back-btn:active{background:rgba(255,255,255,.32);}
+
+/* ---------- Body / question ---------- */
+.body-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 10px;}
+
+.qcard{
+  background:var(--panel);
+  border-radius:10px;
+  padding:16px 14px 16px 52px;
+  position:relative;
+  color:#fff;
+  margin-bottom:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
+}
+.qnum{
+  position:absolute;left:-2px;top:-2px;
+  width:34px;height:34px;border-radius:50%;
+  background:var(--amber);color:#3a2a00;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;
+  border:3px solid var(--bg);
+  transition:background .15s;
+}
+.qnum.rw-correct{background:#2fae5a;color:#fff;font-size:17px;}
+.qnum.rw-wrong{background:var(--red);color:#fff;font-size:17px;}
+.qtext{font-size:15px;line-height:1.5;font-weight:600;margin:0 0 4px;}
+.qsub{font-size:13.5px;line-height:1.48;opacity:.97;margin:9px 0 0;}
+.qsub .roman{font-weight:700;margin-right:6px;opacity:.9;}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+@media (max-width:560px){.opts{grid-template-columns:1fr;}}
+.opt{
+  background:var(--card);border:2px solid var(--line);border-radius:9px;
+  padding:12px 13px;display:flex;align-items:flex-start;gap:10px;
+  cursor:pointer;min-height:52px;position:relative;
+  transition:border-color .12s, background .12s;
+}
+.opt:active{border-color:#a9b8bf;}
+.opt.selected{border-color:var(--green);background:#eef8f1;}
+.opt .letter{
+  flex-shrink:0;width:25px;height:25px;border-radius:6px;background:#e3e7e9;color:#5b6a71;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;
+}
+.opt.selected .letter{background:var(--green);color:#fff;}
+.opt .otext{font-size:13.5px;line-height:1.42;padding-top:1px;padding-right:20px;}
+.opt .mark{position:absolute;right:10px;bottom:10px;font-size:19px;line-height:1;font-weight:800;}
+.opt .mark.mk-correct{color:#2fae5a;}
+.opt .mark.mk-wrong{color:var(--red);}
+.opt.correct-answer{border-color:#3aa15c;background:#e6f6ea;cursor:default;}
+.opt.wrong-selected{border-color:var(--red);background:#fbe9e9;cursor:default;}
+.opt.readonly{cursor:default;}
+.opt.readonly:active{border-color:inherit;}
+
+/* ---------- Bottom nav ---------- */
+.navbar{
+  background:#f3f5f6;border-top:1px solid var(--line);
+  padding:9px 8px;display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.navbtn{
+  flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid #b9c6cc;
+  background:#fff;color:#4a5a62;font-size:17px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.navbtn:disabled{opacity:.35;cursor:default;}
+.pills{flex:1;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:78px;overflow-y:auto;padding:2px 0;}
+.pill{
+  width:30px;height:30px;border-radius:50%;border:1px solid #c3ccd0;background:#fff;color:#5c6b72;
+  font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-shrink:0;
+}
+.pill.current{border:2px solid var(--amber);color:#8a6100;}
+.pill.answered{background:#dcecdf;border-color:#8fc19f;color:#2c6b3f;}
+.pill.rw-wrong{background:#f7dcdc;border-color:#e0a3a3;color:#a13333;}
+.pill.rw-correct{background:#d7f0dd;border-color:#7fbf93;color:#1f6b39;}
+.pill.rw-current{border:2px solid var(--amber);}
+
+/* ---------- Start / Result screens ---------- */
+.screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 18px;text-align:center;}
+.screen h2{font-size:19px;margin:0 0 6px;color:var(--green-dark);}
+.screen p{color:var(--muted);font-size:13.5px;line-height:1.6;max-width:420px;margin:4px 0 0;}
+.startcard{
+  background:#fff;border-radius:14px;padding:26px 22px;max-width:420px;width:100%;
+  box-shadow:0 4px 18px rgba(0,0,0,.08);
+}
+.big-btn{
+  margin-top:20px;background:var(--green);color:#fff;border:none;border-radius:9px;
+  padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;width:100%;min-height:48px;
+}
+.big-btn:active{background:var(--green-dark);}
+.big-btn.secondary{background:#fff;color:var(--green-dark);border:2px solid var(--green);margin-top:10px;}
+.stat-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:11px;margin-top:14px;}
+.stat-row b{color:var(--ink);}
+
+.score-big{font-size:clamp(40px,13vw,52px);font-weight:800;margin:8px 0 0;}
+.pass{color:#1f8a4c;}
+.fail{color:var(--red);}
+.badge{
+  display:inline-block;margin-top:6px;padding:6px 16px;border-radius:20px;font-weight:800;font-size:13px;
+}
+.badge.pass{background:#e1f5e8;color:#1f8a4c;}
+.badge.fail{background:#fbe4e4;color:var(--red);}
+
+.hidden{display:none !important;}
+footer.note{font-size:10.5px;color:#95a0a5;text-align:center;padding:8px 12px;}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,30,35,.5);
+  display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;
+}
+.modal-box{
+  background:#fff;border-radius:12px;padding:22px 20px 18px;max-width:360px;width:100%;
+  box-shadow:0 8px 30px rgba(0,0,0,.25);text-align:center;
+}
+.modal-box p{font-size:14px;line-height:1.6;color:var(--ink);white-space:pre-line;margin:0 0 18px;}
+.modal-btns{display:flex;gap:10px;}
+.modal-btns button{
+  flex:1;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:none;min-height:44px;
+}
+.modal-btns .mb-cancel{background:#eef1f2;color:#4a5a62;}
+.modal-btns .mb-ok{background:var(--green);color:#fff;}
+
+@media (max-width:360px){
+  .hdr-titles p{display:none;}
+  .back-btn span.lbl, .finish-btn span.lbl{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen">
+    <div class="startcard">
+      <h2>AOSDS 考試</h2>
+      <p>AOSDS Examination — 模擬練習</p>
+      <div class="stat-row"><span>題庫總題數</span><b id="bankTotal">—</b></div>
+      <div class="stat-row"><span>本次抽考題數</span><b>40 題</b></div>
+      <div class="stat-row"><span>合格分數</span><b>70% (28/40)</b></div>
+      <button class="big-btn" id="startBtn">開始考試 Start Exam</button>
+    </div>
+  </div>
+
+  <!-- EXAM / REVIEW SCREEN (shared) -->
+  <div id="examScreen" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div class="hdr-titles">
+          <h1 id="hdrTitle">AOSDS 考試</h1>
+          <p id="hdrSubtitle">AOSDS Examination</p>
+        </div>
+        <div class="hdr-actions">
+          <button class="back-btn" id="backBtn">&#8249; <span class="lbl" id="backBtnLbl">返回</span></button>
+          <button class="finish-btn" id="finishBtn">完成 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="body-scroll" id="bodyScroll">
+      <div class="qcard">
+        <div class="qnum" id="qNum">1</div>
+        <p class="qtext" id="qText"></p>
+        <div id="qSubs"></div>
+      </div>
+      <div class="opts" id="optsWrap"></div>
+    </div>
+
+    <div class="navbar">
+      <button class="navbtn" id="prevBtn">&#8249;</button>
+      <div class="pills" id="pills"></div>
+      <button class="navbtn" id="nextBtn">&#8250;</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen" class="hidden screen" style="justify-content:flex-start;padding-top:32px;">
+    <h2>考試結果 Result</h2>
+    <div class="score-big" id="scoreBig">0/40</div>
+    <div class="badge" id="badge">—</div>
+    <p id="scorePct"></p>
+    <button class="big-btn" id="reviewBtn" style="max-width:320px;">查看詳解 Review Answers</button>
+    <button class="big-btn secondary" id="retryBtn" style="max-width:320px;">重新抽題再考 Retake</button>
+  </div>
+
+  <footer class="note">練習工具僅供自我測驗參考，非官方 AOSDS 考試系統。</footer>
+
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal-box">
+      <p id="modalMsg"></p>
+      <div class="modal-btns">
+        <button class="mb-cancel" id="modalCancel">取消 Cancel</button>
+        <button class="mb-ok" id="modalOk">確定 OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FULL_BANK = [{"q": "To what must you give the greatest priority when an incident occurs?", "options": ["Speed of response", "Ensuring that all relevant people are informed", "Safety of passengers and staff", "Preservation of evidence"], "correct": "Safety of passengers and staff"}, {"q": "What must staff ensure of otherwise they must not lean out of any door or window of a vehicle?", "options": ["Ensure safe to do so", "Informed Safety Officer", "Isolated and Earthed", "Informed Train Crew Officer"], "correct": "Ensure safe to do so"}, {"q": "What is the difference between the duties of a Handsignalman and a Lookoutman?", "options": ["Both of them are competent at giving warning of approaching trains when staff are working on or near a track but a Handsignalman is competent at mainline while a Lookoutman is competent at depot tracks only.", "A Handsignalman is qualified for controlling train movements and a Lookoutman is competent to warn and protect staff working on or near a track.", "During signaling equipment failure, a Lookoutman is responsible for controlling train movements.", "They have no difference. A Lookoutman can also act as a Handsignalman in controlling train movements."], "correct": "A Handsignalman is qualified for controlling train movements and a Lookoutman is competent to warn and protect staff working on or near a track."}, {"q": "You have been using a trolley and other portable equipment during work. What must you do to minimize risk after work has finished? i. Remove the equipment from any place where they may be a hazard ii. Place the equipment inside nearby plant room away from the public iii. Secure the trolley by chain and padlock iv. Assign security staff to monitor the equipment", "options": ["Only i, iii", "Only ii, iv", "Only i, iv", "Only iii, iv"], "correct": "Only i, iii"}, {"q": "What is the minimum safe distance when working near 1500V d.c. equipment?", "options": ["1.7 metres", "2 metres", "2.2 metres", "1.5 metres"], "correct": "2 metres"}, {"q": "What is the definition of a \"Circuit Main Earth\"?", "options": ["Substance which permits flow of electricity", "Substance which not permits flow of electricity", "Any earth, whether portable or integral with the equipment, which is applied prior to issue of a Permit-to-Work (High Voltage and Traction Voltage) or Sanction-for-Test", "Transmission line or cable in the electrical power distribution system"], "correct": "Any earth, whether portable or integral with the equipment, which is applied prior to issue of a Permit-to-Work (High Voltage and Traction Voltage) or Sanction-for-Test"}, {"q": "Flammable and dangerous substances must not be used or stored at a worksite except with written approval. lf flammable material must be use, which of the following handle technique is wrong?", "options": ["Quantity must be minimised and must not exceed 35 litres in aggregate", "It must be stored in a properly labelled closed lid metal container away from all sources of heat", "Base on Competent Person's own decision", "It must be in metal containers specially designed for the purpose"], "correct": "Base on Competent Person's own decision"}, {"q": "A staff accidentally comes into contact with a equipment that may be live at an unknown voltage, what immediate action must you take? i. If all parts of the person are further than one metre from a conductor, ensure that they do not get closer than that safety distance during removal ii. For investigation purposes, the equipment statuses must be maintained at the time of occurrence when rescuing iii. If the person is within one metre of a conductor, have current switched off before touching iv. Call for assistance from an Authorised Person", "options": ["Only i & iii", "Only iv", "Only ii & iii", "Only i, ii & iv"], "correct": "Only i & iii"}, {"q": "Compliance is an integral part of safety which is a prerequisite for railway operations. Hence, staff must obey which of the following requirements？ i. Internal work orders may override railway safety rules, procedures and instructions ii. For work that would affect safety should be carried out by supervisors or officials iii. Understand and abide by all Rules, Procedures and Instructions contained in the publications with which they are issued for their duties iv. Obey legitimate instructions given by supervisors and officials", "options": ["Only i, iv", "Only iii, iv", "Only ii, iii", "Only i, iii"], "correct": "Only iii, iv"}, {"q": "Within a worksite on track, only one vehicle can be authorised to move at any one time within a limit of movement. However, for the overhead line replacement work carried out by two moving vehicles, under which of the following conditions must these vehicles obey? i. These two vehicles must be operated at a speed of 5 km/h or below ii. These two vehicles must be kept a least 10 meters apart iii. These two vehicles must be operated from the leading driving cab iv. These two vehicles must be travelling in the same direction", "options": ["All the options", "Only i, iii, iv", "Only it, iii, iv", "Only i, ii, iv"], "correct": "Only i, iii, iv"}, {"q": "Staff working on or near mainline have to aware of which of the following condition?", "options": ["Inform the Traffic Controller once crossed the mainline", "Obtain the time limit of work from the Communication Controller", "Take particular care on curved track sections where they may be exposed to risk from end and centre throw of vehicles", "Arrange enough security guard"], "correct": "Take particular care on curved track sections where they may be exposed to risk from end and centre throw of vehicles"}, {"q": "What is a moveable rail section provided in sidings or depot outlet tracks which prevents a train from overrunning a signal at danger or proceeding beyond the limit of an authorized movement from reaching a fouling point called?", "options": ["Trailing points", "Trap points", "Hand-operated points", "Facing points"], "correct": "Trap points"}, {"q": "When you have to erect a scaffolding and working platform closer to overhead line equipment than the prescribed safety distance, what must you ensure? i. The last passenger train has departed ii. The worksite is within depot area iii. The overhead line equipment has been isolated iv. The overhead line equipment has been earth", "options": ["Only ii, iv", "Only i, ii", "Only ii, iii", "Only iii, iv"], "correct": "Only iii, iv"}, {"q": "Who is responsible to supervise train movements on mainline and connection tracks which within an Engineer's possession under authority of the Engineer's Person-in-Charge?", "options": ["Traffic Controller", "Engineer's Person-in-Charge", "Handsignalman", "Lookoutman"], "correct": "Engineer's Person-in-Charge"}, {"q": "What precaution must be done otherwise all electrical equipment, apparatus and conductors associated with the power distribution and traction current systems must be regarded as live at all times and dangerous to human life?", "options": ["Confirmed with the Station Controller that the power has been switched off", "The work is supervised by an Authorized Person", "The equipment has been properly isolated and earthed", "A Sanction for Test has been issued by an Authorized Person"], "correct": "The equipment has been properly isolated and earthed"}, {"q": "When all the persons are in the place of safety,what should they do for acknowledge warning which issued by Lookoutman?", "options": ["Raising one arm above the head", "Shouting", "Use mobile to contact Lookoutman", "Just ignore it"], "correct": "Raising one arm above the head"}, {"q": "What is it called with the distance between running rail faces in a single track?", "options": ["Track gauge", "Kinematic envelope", "Kinematic gauge", "Structure gauge"], "correct": "Track gauge"}, {"q": "During fire-fighting, what type of fire retardant must NOT be used to the area within the safe distance of live voltage, traction voltage or overhead line equipment directly which may cause electric shock? i. Water ii. Dry chemical iii. Electrical conductive iv. Carbon dioxide", "options": ["Only i, iv", "Only ii, iv", "Only i, iii", "Only ii, iii"], "correct": "Only i, iii"}, {"q": "What is it called when two or more locomotives which are coupled mechanically and electrically and are driven from a single driving position?", "options": ["Locomotives in series", "Locomotives in multiple", "Locomotives in line", "Battery locomotives"], "correct": "Locomotives in multiple"}, {"q": "Which of the following is NOT a Limitation-of-Access (High Voltage and Traction Voltage) is to define?", "options": ["Traffic hour of that location", "The limits and nature of the work", "The status of the concerned live equipment", "Safety precautions which must be followed"], "correct": "Traffic hour of that location"}, {"q": "When involved in applying protection within a possession and for controlling train movements. Who must have a means of immediate communication? i. Engineer's Person-in-Charge ii. Handsignalman iii. Competent Person iv. Lookoutman", "options": ["Only i, ii, iii", "Only i, ii, iv", "All the options", "Only ii, iii, iv"], "correct": "Only i, ii, iii"}, {"q": "During Traffic Hours, what will be the protection arrangements if staff are required to access tracks where there is limited clearance or no place of safety? i. Arrange a track trolley on the approach side of the worksite (for all lines) ii. Arrange a standing train on the approach side of the worksite (for all lines) iii. Arrange an engineering train on the approach side of the worksite (for all lines) iv. Hold a train at any platform from where trains can enter the worksite (except Light Rail)", "options": ["Only ii, iv", "Only ii, iii", "All the options", "Only i, iv"], "correct": "Only ii, iv"}, {"q": "What is it called for a switch used for sub-dividing an overhead line equipment section electrically?", "options": ["Section isolator", "Manual isolator", "Motorized isolator", "Infeed isolator"], "correct": "Section isolator"}, {"q": "What safety document must be issued before starting any work on or near high voltage or traction voltage equipment when the minimum safe distance cannot be maintained? i. Permit-to-Work (High Voltage and Traction Voltage) ii. Sanction-for-Test iii. Permit-to-Work (Mechanical) iv. Isolation Record Form", "options": ["Only i, ii, iv", "Only ii, iii, iv", "Only i, ii, iii", "Only i, iii, iv"], "correct": "Only i, ii, iv"}, {"q": "You are speaking to someone in a noisy environment. You require them to carry out a specific instruction concerning safety. According to the Railway Safety Rules, what must you do ?", "options": ["Speak loudly towards the person", "Repeat your specific instructions twice", "Ask the person to read back your specific instructions correctly", "Ask the person to clearly describe the specific instructions in words"], "correct": "Ask the person to read back your specific instructions correctly"}, {"q": "What must the Competent Person in charge ensure when work on High Voltage Apparatus?", "options": ["Ensure that all members of the working party know which apparatus is live and which is isolated", "Ensure that all members of the working party have proper schedule of their daily life", "Ensure enough security guard", "Ensure enough Lookoutman"], "correct": "Ensure that all members of the working party know which apparatus is live and which is isolated"}, {"q": "Except within a ________horns must be sounded a long blast when passing a danger signal.", "options": ["Possession", "Tailwall", "Station", "Depot"], "correct": "Possession"}, {"q": "What is the minimum safe distance when working near 750V d.c. equipment?", "options": ["2 metres", "2.2 metres", "1.7 metres", "1.5 metres"], "correct": "2 metres"}, {"q": "When staff are required to go onto a track where there is room for them to remain in a place of safety while trains pass, what safety precaution may be imposed if necessary for safety, by agreement between the Competent Person and Traffic Controller?", "options": ["Crowd control", "A temporary speed restriction", "Non-traffic hours", "Piston effect"], "correct": "A temporary speed restriction"}, {"q": "Why station staff have to inspect contractors' worksites regularly?", "options": ["To see whether the contractors have finished the work", "To assist the contractors if necessary", "To ensure the mutually agreed safety arrangements are followed", "To evaluate the quality of work done by the contractors"], "correct": "To ensure the mutually agreed safety arrangements are followed"}, {"q": "There are two worksites in a possession. What is the risk if no proper protection is arranged?", "options": ["Impede the working of Yard Master", "Impede the workers cleaning at site", "Impede the working of Traffic Controller", "An Engineering train could enter the wrong worksite"], "correct": "An Engineering train could enter the wrong worksite"}, {"q": "What protection will be arranged by the Competent Person for the pedestrian access work which must be carried out in a possession involving the working of trains and mechanised vehicles at RM mode?", "options": ["\"No Track Access\" warning boards", "Placing track circuit operating clip", "Placing red flashing lights (PA)", "Placing red flashing lights"], "correct": "Placing red flashing lights (PA)"}, {"q": "On Light Rail Mainline and Connection Track possession, when a train is operate at a speed over 60km/h, in what condition, the distance between the worksite and possession boundaries may be reduced to 100 metres?", "options": ["Only when the train is running on a ballast track", "Only when the traction current has been switched off", "The train can apply track brakes", "Absolutely not allowed because it will affect safety"], "correct": "The train can apply track brakes"}, {"q": "Which one is INCORRECT if a Competent Person in charge is going to be relieved before work completion on High Voltage Apparatus?", "options": ["Both Competent Persons and the Authorised Person must sign the transfer", "A Permit-to-Work (High Voltage and Traction Voltage) must be transferred to the person taking charge who must read it aloud to the Authorised Person", "The Authorised Person must inform the Power System Controller and ensure that personal padlocks are changed", "Inform Safety Officer"], "correct": "Inform Safety Officer"}, {"q": "Who is having written approval of the Engineer to operate specified equipment where formal qualification is required by the laws of Hong Kong?", "options": ["Lookoutman", "Qualified Person", "Pilotman", "Security Guard"], "correct": "Qualified Person"}, {"q": "The Rules for protection measures for an Engineer's possession must be followed in an emergency possession, except that the protection for a possession of overhead line recovery work is arranged by placing a red flashing light (engineering work) at a distance of not less than _ metres beyond all worksite boundaries.", "options": ["80", "50", "70", "60"], "correct": "50"}, {"q": "Who must be informed by the Competent Person and make agreement on the estimated additional time required and special arrangements if completion of work may delay switching on of traction current or passenger train service?", "options": ["Engineer", "Station Manager", "Traffic Controller", "Security Inspector"], "correct": "Traffic Controller"}, {"q": "How does a Lookoutman display an \"All Right\" handsignal when the concerned track is clear of persons, tools and materials? i. Holding a white light steadily above the head ii. Holding one arm above head iii. Waving a yellow flag slowly from side to side across body iv. Waving a yellow flag slowly up and down vertically", "options": ["Only ii, iii", "Only ii, iv", "Only iii, iv", "Only i, ii"], "correct": "Only ii, iii"}, {"q": "What is it called when the action of a train not calling at a station or stations?", "options": ["Overrun", "Set back", "Non-stop", "Stop"], "correct": "Non-stop"}, {"q": "On completion of work, who must arrange with the Traffic Controller or Station Controller, or, on Light Rail, the Infrastructure Engineering Control Centre to test all points within the possession to ensure that detection and indications are obtained in both normal and reverse positions?", "options": ["Handsignalman", "Engineer's Person-in-Charge", "Train Operator", "Safety Officer"], "correct": "Engineer's Person-in-Charge"}, {"q": "What is the maximum speed limits when conducting Propelling movement?", "options": ["5 km/h", "10 km/h", "22 km/h", "8 km/h"], "correct": "8 km/h"}, {"q": "Who will supervise working parties for works on or near tracks which do not require possession, and works in a depot which require possession not involving Engineer's trains, and may apply protection for any possession as directed?", "options": ["Competent Person (Possession)", "Competent Person (Track)", "Competent Person (Non-track)", "Competent Person (Confined Space)"], "correct": "Competent Person (Track)"}, {"q": "How does a Handsignalman display a \"Proceed\" handsignal when the train is safe to proceed? i. Moving one arm up and down in a semi-circle ii. Holding a green aspect hand lamp steadily iii. Holding a green flag steadily iv. Holding a white light steadily above head", "options": ["Only iii, iv", "Only i, iv", "Only ii, iii", "Only i, ii"], "correct": "Only ii, iii"}, {"q": "When working anywhere on the railway, what should you always know about?", "options": ["Local fire protection and evacuation arrangements", "The location of the canteen", "The way in and out of the workplace", "Be familiar with people working around you"], "correct": "Local fire protection and evacuation arrangements"}, {"q": "Who may work alone on high voltage or traction voltage equipment?", "options": ["An Engineer's Person-in-Charge who is in overall charge", "An Authorized Person who is in charge of the work", "No person in any circumstances", "A Competent Person who has written approval from the Engineer"], "correct": "No person in any circumstances"}, {"q": "When a major incident occurs that involving external authorities, the Joint Control and Liaison Centre will be established to co-ordinate rescue and recovery efforts of each participating authority. At where will this Centre be normally set up?", "options": ["Mobile Command Unit of Fire Services Department", "Operations Control Centre of MTR", "Mobile Command Unit of Hong Kong Police", "Temporary Hospitals and Casualty Unit of Hospital Authority"], "correct": "Mobile Command Unit of Fire Services Department"}, {"q": "Staff using hand lamps or flags as signals must hold them, and not place them on or fix them in the ground or elsewhere. What is the exception?", "options": ["To indicate an obstruction", "During Traffic Hours", "The Lookoutman is informed", "Authorization of Handsignalman is obtained"], "correct": "To indicate an obstruction"}, {"q": "When working on or near tracks where no Lookoutman provided, what action must be given by the staff after arriving to a safe place in response to the Train Operators audible warnings?", "options": ["Held a green flag steadily", "Raising one arm above the head", "Raising both arm above the head", "Both hand waved violently"], "correct": "Raising one arm above the head"}, {"q": "You need to work inside a room that contains fire protection system gas cylinders. To protect people inside the room, what must the Competent Person ensure? i. Control is set to manual ii. A PTW(Hotwork) is issued by a Fire Marshal iii. The safety pin is applied to the cylinder rack iv. You have signed to acknowledge the Limitation-of-Access (High Voltage and Traction Voltage) issued by the landlord", "options": ["only i, iii", "only ii, iv", "only ii, iii", "only i, iv"], "correct": "only i, iii"}, {"q": "Only in what situation(s) is allowed to switch off traction current? i. To stop serious arcing or fusing ii. When a fault has occurred in overhead line equipment iii. In case of an emergency iv. For authorized engineering work", "options": ["Only ii, iii, iv", "Only i, iii, iv", "Only i, ii, iii", "All the options"], "correct": "All the options"}, {"q": "Arrangement for any person (except the Rolling Stock staff and train staff who are in the course of their duties) to ride on an Engineer's train to worksite must be pre-approved at the ___________", "options": ["Station Controller", "Engineering Works meeting and published in the Traffic Notice", "Authorized Person", "Yard Master"], "correct": "Engineering Works meeting and published in the Traffic Notice"}, {"q": "Engineer's Person-in-Charge - Competent Person having written approval of the Engineer to_____. who must wear an identification when work is in progress.", "options": ["Effect and supervise isolations as required by the Rules, and to issue and cancel Permits-to-Work and Sanctions-for-Test", "Take and supervise possessions", "Supervision and control of power distribution and traction current systems", "Operate specified equipment where formal qualification is required by the laws of Hong Kong"], "correct": "Take and supervise possessions"}, {"q": "What action must be taken by the Engineer's Person-in-Charge if any part of the Fully Automatic Operation area of depot is taken as possession and no train operation in Fully Automatic Operation or Coded Manual mode is allowed? i. Arranged Isolation and Earth ii. Confirm with the Yard Master that appropriate protection measure has been taken and an indication of protection is shown on the local control panel iii. Arrange to suspend train movement in Fully Automatic Operation and Coded Manual mode by operating the protection keyswitches or local control panel iv. Request the Yard Master to arrange with the Power System Controller to switch on traction current", "options": ["Only ii, iii", "Only iii, iv", "Only i, ii", "Only i, iv"], "correct": "Only ii, iii"}, {"q": "On top of the RSR requirements, which document or manual must be followed when work is to be done on a paved track or at the locations to which road vehicles have access on Light Rail Mainline and Connection Tracks?", "options": ["Safety Manual", "Highways Department- Code of Practice for the Lighting, Signing and Guarding of Road Works", "Standing Operations Procedures Manual", "Light Rail Operations Manual"], "correct": "Highways Department- Code of Practice for the Lighting, Signing and Guarding of Road Works"}, {"q": "Who must be reported immediately when unusual incidents and accidents involving severe injury or fatality?", "options": ["Traffic Controller", "Lookoutman", "Handsignalman", "Qualified Person"], "correct": "Traffic Controller"}, {"q": "Except Light Rail, what kind of protection must be applied when there is no train or mechanised vehicle within a possession?", "options": ["Arrange Station Security to control the working parties going in and out the possession", "Arrange Lookoutman", "Install conspicuous temporary barricade tapes along the length of the worksite", "Place one red flashing light (engineering work) at all possession boundaries"], "correct": "Place one red flashing light (engineering work) at all possession boundaries"}, {"q": "Which location of the worksite must be applied with approved earthing devices in each isolated section or sub-section for work on or near overhead line equipment?", "options": ["The traction current supply end", "Either one side", "Each side", "The location where the Competent Person considers safe"], "correct": "Each side"}, {"q": "Whom must the Engineer's Person-in-Charge to confirm with in order to take possession after protection of possession is applied and possession certificate is signed?", "options": ["Competent Person", "Traffic Controller", "Handsignalman", "Train Operator"], "correct": "Traffic Controller"}, {"q": "Who is responsible for signed and given the Permit-to-Work(Hot Work) to a Competent Person in charge of hot work to be carried out with details stated in the form for the purpose of making known to such person what safety precautions have been carried out and it is safe to work?", "options": ["Fire Marshal", "Depot Manager", "Power System Controller", "Station Manager"], "correct": "Fire Marshal"}, {"q": "After any fire or after discharge of chemical fire suppressant, what shall you ensure before you enter into the affected room? i. Bring along a radio ii. If entry is necessary before thorough ventilation, suitable breathing apparatus must be worn iii. Ensure the room is ventilated for at least 5 minutes iv. Ensure the room is ventilated thoroughly", "options": ["Only ii, iv", "Only i, iii", "Only ii, iii", "Only i, iv"], "correct": "Only ii, iv"}, {"q": "When must you acknowledge a warning given by a Lookoutman?", "options": ["When you are in place of safety", "When you can see that other staff are clear", "Immediately on hearing the warning", "When you have stopped what you are doing"], "correct": "When you are in place of safety"}, {"q": "A fire or smouldering breaks out on a live electrical apparatus near you. What type of fire-fighting equipment must you use to extinguish the fire? i. Use a carbon dioxide (CO2) fire extinguisher ii. Use a fire hose reel iii. Use a dry chemical fire extinguisher iv. Use a foam fire extinguisher", "options": ["Only i, iii", "Only i, iv", "Only ii, iii", "Only ii, iv"], "correct": "Only i, iii"}, {"q": "Who is the \"Engineer\" when refers to the \"Railway Safety Rules\" and other railway safety documents?", "options": ["Any engineering representative", "Senior engineering staff appointed by the HK Government", "An Operations Division Department Head or accredited representative", "Engineering staff of respective engineering sections within MTR"], "correct": "An Operations Division Department Head or accredited representative"}, {"q": "What is it called when a non-passenger vehicle used in an Engineer's train?", "options": ["Engineer's train", "Non-passenger train", "Lomotive", "Wagon"], "correct": "Wagon"}, {"q": "Which party must be referred with the matter if the person responsible for the premises is not satisfied with the engineering work in railway premises? i. Operations Manager ii. Duty Services Manager iii. Maintenance section concerned iv. Traffic Controller", "options": ["Only i, ii", "Only iii, iv", "Only ii, iii", "Only i, iv"], "correct": "Only iii, iv"}, {"q": "When the Engineer's train run between 23-40 km/h within a possession, what is the minimum safe braking distance between worksite boundary and possession boundary?", "options": ["100 metres", "25 metres", "75 metres", "50 metres"], "correct": "100 metres"}, {"q": "What action must be taken by the Engineer's Person-in-Charge before taking Possession? i. Agree on the detailed arrangements with the Traffic Controller ii. Complete a Possession Certificate which must be signed by Station Controller iii. Obtain authorization from Station Controller to set up protection iv. Arrange and confirm that protection is applied by a Competent Person or Handsignalman", "options": ["Only i, ii, iv", "Only i, iii, iv", "All the options", "Only ii, ili, iv"], "correct": "Only i, ii, iv"}, {"q": "What must staff ensure of when working on or near tracks otherwise they must not stay in the space between two adjacent tracks?", "options": ["It is safe to do so", "During non-traffic hours", "During traffic hours", "Station Controller is informed"], "correct": "It is safe to do so"}, {"q": "Whom must obtain authorisation from by the Engineer's Person-in-Charge before taking possession to set up protection?", "options": ["Train Operator", "Traffic Controller", "Security Inspector", "Handsignalman"], "correct": "Traffic Controller"}, {"q": "What is the definition of Braking distance?", "options": ["A fixed or friction-sliding device at the end of a siding or overrun track to prevent a train running beyond", "Degree by which one running rail is raised above the other on curves", "Distance required by a train to stop under normal braking conditions, taking into account track gradient, train weight and speed", "The length of track occupied by a train"], "correct": "Distance required by a train to stop under normal braking conditions, taking into account track gradient, train weight and speed"}, {"q": "What is the requirement when performing duty on platform? i. Assist in the prompt dispatch of trains ii. Ensure passengers are warned when the train doors and platform doors are about to close iii. Be alert for any incident or irregularity, particularly to detect any potential hazards near a platform edge or train such as passengers falling or placing objects near or on a platform edge or automatic platform gate iv. Pay particular attention to closing of train doors and platform doors, and the potential for passengers being trapped", "options": ["Only i, ii, iv", "Only ii, iii, iv", "Only i, iii, iv", "All the options"], "correct": "All the options"}, {"q": "Details of all protection applied must be recorded in a Possession Certificate, which must normally be signed by the Station Controller or Yard Master. On Light Rail System, the certificate must be read back to and agreed by whom?", "options": ["Qualified Person", "Traffic Controller", "Security Inspector", "Competent Person"], "correct": "Traffic Controller"}, {"q": "What is the responsibility of Environmental System Controller?", "options": ["Designated senior Operations Official on duty responsible for attending and taking local charge at incidents", "System of ventilation of tunnels and ventilation and air-conditioning of stations, etc", "Engineering Official on duty being responsible for management and control of rolling stock operations and landlord activities in a depot", "Person having written approval of the Engineer to work on the railway or fixed equipment, to arrange protection for and supervise working parties"], "correct": "System of ventilation of tunnels and ventilation and air-conditioning of stations, etc"}, {"q": "Normally, what is the maximum speed for a train that operates in Caution Speed?", "options": ["22", "20", "21", "23"], "correct": "22"}, {"q": "What is it called when an isolator operated manually by means of a handle?", "options": ["Infeed isolator", "Manual isolator", "Section isolator", "Motorized isolator"], "correct": "Manual isolator"}, {"q": "What is it called when a work is to be done on or near the track, which does not require possession?", "options": ["Non Engineer's Train work", "Engineer's Train Work", "Pedestrian Access Work", "Light Duty Work"], "correct": "Pedestrian Access Work"}, {"q": "Before a train is moved, the Engineer's Person-in-Charge or ___________ must ensure that all materials are properly secured so that they will not be displaced by any movement of the train or by operation of tunnel ventilation equipment.", "options": ["Competent Person", "Authorised Person", "Pilotman", "Qualified Person"], "correct": "Competent Person"}, {"q": "Who are you subject to the authority and direction when working at a station or associated ancillary building?", "options": ["Yard Master", "Station Maintenance Supervisor", "The Station Controller at staffed stations", "Operations staff"], "correct": "The Station Controller at staffed stations"}, {"q": "A Lookoutman is a person who passed as competent to work on or near a track. What is his main roles and responsibilities?", "options": ["To warn and protect staff working on or near a track", "To supervise a working party within a possession", "To supervise a working party within a worksite", "To control train movements"], "correct": "To warn and protect staff working on or near a track"}, {"q": "On lines where traction current is switched off after close of traffic, the period between the time traction current is switched on each morning and the time it is switched off at night is called?", "options": ["Traffic Hours", "Operating Hours", "Traction Current Switched On Time", "Non-Traffic Hours"], "correct": "Traffic Hours"}, {"q": "When there is water on a track slightly below the top of the running rails a temporary speed restriction must be introduced. Why?", "options": ["Water may splash on to trackside equipment", "Waves may be created that could affect underframe equipment", "Train Operators must be able to see the rail clearly", "The water may affect adhesion"], "correct": "Waves may be created that could affect underframe equipment"}, {"q": "Before carrying out work, the Competent Person must ensure that at least one dry chemical powder portable fire extinguisher, or portable fire extinguisher of appropriate type at what weight must be available at the premise?", "options": ["2.9 kg", "4.5 kg", "0.75 kg", "1.2 kg"], "correct": "4.5 kg"}, {"q": "What precaution must be done with overhead line equipment in the first place in order to climb above floor level of any rail or road vehicle on any track provided with overhead line equipment?", "options": ["Isolated", "Either Isolated or Earthed", "Isolated and Earthed", "Earthed"], "correct": "Isolated and Earthed"}, {"q": "Competent Person (Depot Cleaning) may supervise working parties for conducting cleaning work in a depot. However, he/she must not carry out which of the following duty?", "options": ["The work does not require the use of chemical", "The work involves isolation of overhead line equipment", "The work does not require to occupy the depot track", "The working party must not more than 6 persons"], "correct": "The work involves isolation of overhead line equipment"}, {"q": "What will you do if you saw serious arcing or fusing?", "options": ["Investigate the cause", "Use a fire extinguisher", "Request that power be switched off", "Call the Fire Services Department"], "correct": "Request that power be switched off"}, {"q": "The Train Operator must NOT ______in any way.", "options": ["Use Fingering Procedure", "Contact with Station Controller", "Contact with Traffic Controller", "Be distracted from attention to duty"], "correct": "Be distracted from attention to duty"}, {"q": "When performing Lookoutman duties, what will put the working party at risk? i. Leave the designated position ii. Contact the working party iii. Contact the Traffic Controller when need iv. Allow anything to distract attention", "options": ["Only iii, iv", "Only i, iv", "Only i, ii", "Only ii, iii"], "correct": "Only i, iv"}, {"q": "Under which circumstances, mobile telephones, communication equipment and mobile electronic devices, including mobile smart devices can be used on railway? i. Be used for Corporation business purposes only. ii. In the situation which does not distract staff's attention from duty iii. In the situation which does not affect proper performance of their duty iv. Use when in necessity", "options": ["Only i, iii, iv", "Only i, ii, iv", "All the options", "Only ii, iii, iv"], "correct": "All the options"}, {"q": "Moving trains are a significant hazard to a person on the track, which can lead to: i. Staff injury, fatality ii. Staff failed to take the meal break on time iii. Staff failed to leave work on time iv. Damage to Corporation property", "options": ["Only i, iv", "Only iii, iv", "Only ii, iii", "Only i, iii"], "correct": "Only i, iv"}, {"q": "What action must be taken by the Engineer Person-in-Charge when work involves the working of electric trains, rail grinding units or train speed higher than 22 km/h within possession on Mainline and Connection Tracks?", "options": ["Ensure that no one is permitted to track unless the possession is an open section", "Working Party is not allowed to descend onto the track without registered onto the ETMS system", "Agree with the Security Officer that precautionary actions have been taken", "Place \"No Track Access\" protection barriers at each possession boundary, except where the possession boundary is located at the end of track"], "correct": "Place \"No Track Access\" protection barriers at each possession boundary, except where the possession boundary is located at the end of track"}, {"q": "On receipt of the Isolation Record Form, whom must the Competent Person in charge reach a complete understanding with on the isolation and earthing arrangements and the limit of work as stated in the form?", "options": ["Authorised Person", "Station Controller", "Traffic Controller", "Yard Master"], "correct": "Authorised Person"}, {"q": "When track access is required on the route to or from the worksite, the Competent Person must obtain authorisation of track access and", "options": ["Station plant room", "Track", "Depot", "Station concourse"], "correct": "Track"}, {"q": "Which of the following options are not correct when staff are required to access to track?", "options": ["Tools and materials stored between or near running rails", "When not familiar with walking on or near tracks, be accompanied by a person familiar with local conditions", "Take particular care when not in a place of safety or where there is limited clearance", "Agree with Traffic Controller on the communication method during traffic hours"], "correct": "Tools and materials stored between or near running rails"}, {"q": "What is it called when a combination of points and crossings which permits trains to cross from one track to another?", "options": ["Crossover", "Obtuse crossing", "Common crossing", "Clearance"], "correct": "Crossover"}, {"q": "What is the definition of a \"Temporary Earth?", "options": ["High-power single conductor, as a common connector for several other wires", "Substance which permits flow of electricity", "Static apparatus for supplying an alternating current at one voltage when fed with alternating current at the same or with alternating current at the same or", "Additional earth applied after issue of a Permit-to-Work (High Voltage and Traction Voltage) or Sanction-for-Test and which must be removed prior to cancellation of either"], "correct": "Additional earth applied after issue of a Permit-to-Work (High Voltage and Traction Voltage) or Sanction-for-Test and which must be removed prior to cancellation of either"}, {"q": "When a point has been set for a train to proceed, the direction of the point must not be changed until the train has passed it, unless: i. The train will enter Maintenance Track. ii. The train has stopped in front of the point. iii. The Engineer's Person In Charge is informed. iv. The Train Operator is informed.", "options": ["Only ii, iv", "Only i, iv", "Only ii, iii", "Only i, iii"], "correct": "Only ii, iv"}, {"q": "Improper control and operation of train movements, and failure to ensure safety of trains before entering service and during movements can lead to _______ .", "options": ["Serious incidents, derailments and collisions", "Depot closure", "The staff fail to off duty on time", "Train safely departed"], "correct": "Serious incidents, derailments and collisions"}, {"q": "Which of the following document is not belonged to Safety Document?", "options": ["Limitation-of-Access (High Voltage and Traction Voltage)", "Traffic Notice", "Isolation Record Form", "Sanction-for-Test"], "correct": "Traffic Notice"}, {"q": "Which of the following situation may be used a track trolley on mainline and connection tracks outside depot limits? i. By using it only when trains are not running ii. By using it only during non-traffic hours iii. By arranging a Lookoutman to accompany it for its protection iv. By using it in an Engineer's possession", "options": ["Only iii, iv", "Only ii, iii", "Only i, ii", "Only ii, iv"], "correct": "Only ii, iv"}, {"q": "A form signed and given by a Responsible Person (Low Voltage) to a Person-in-Charge (Low Voltage) of work to be carried out on any earthed low voltage equipment for the purpose of making known to such person exactly what apparatus is isolated from all live conductors, has been discharged and is connected to earth (if necessary), and on which it is safe to work. Which of the following document is matched with the above statement?", "options": ["Permit-to-Work (Hot Work)", "Sanction for Test", "Permit-to-Work (Mechanical)", "Permit-to-Work (Low Voltage Fixed Electrical Installation)"], "correct": "Permit-to-Work (Low Voltage Fixed Electrical Installation)"}, {"q": "A working party is going to work at a height of 3 metres above ground in order to carry out an inspection or work. What must the Competent Person do before start of work? i. Provide proper working platform or scaffolding ii. Provide radio to keep close contact with the station controller iii. Provide safety belt or harness which is anchored safely to a secure anchorage point iv. Appoint a Lookoutman", "options": ["Only ii, iv", "Only i, iii", "Only i, ii", "Only i, iv"], "correct": "Only i, iii"}, {"q": "Possession is_______under the sole control of an Engineer's Person-in-Charge.", "options": ["A station", "A depot", "A specific section of track or tracks", "A platform"], "correct": "A specific section of track or tracks"}, {"q": "What protection must be applied on metallic scaffolds and working platforms to avoid bridging the rail and overhead line equipment where rail potential may exist at worksite?", "options": ["Insulated screens or barriers", "Personal pad lock", "Safety belts and harnesses", "Red Flashing Light"], "correct": "Insulated screens or barriers"}, {"q": "Which of the following descriptions belong to Platform Doors? i. A platform end door located at headwall operated manually to facilitate staff access to track ii. A platform end door located at tailwall operated manually to facilitate staff access to track iii. A partial-height sliding gate design Automatic Platform Gate iv. A full-height sliding door design Platform Screen Door", "options": ["Only i, ii", "Only iii, iv", "Only ii, iii", "All the options"], "correct": "Only iii, iv"}, {"q": "What would be the possible result when staff on or near tracks may be taken unaware by movement or direction of movement of trains?", "options": ["A defect or failure considered to be likely to curtail service on a mainline for more than 20 minutes", "Staff injury or fatality", "Delay in switching on the traction current", "Station closere"], "correct": "Staff injury or fatality"}, {"q": "What do we call a member of Operating Department in Senior Supervisory grade at S30 or higher?", "options": ["Operations Officials", "Senior Operations Officials", "Engineering Officials", "Senior Engineering Officials"], "correct": "Senior Operations Officials"}, {"q": "Before gaining access to track, which item is NOT the person in charge to ensure?", "options": ["Possess safety document before accessing onto track", "The time when all persons,tools and materials must be clear", "Agree the means for track access", "Protection arrangements"], "correct": "Possess safety document before accessing onto track"}, {"q": "What is the definition of Line clear?", "options": ["A declaration made by a Competent Person, an Operations Official or Engineering Official that a section of track is clear of persons, tools and materials and that it is safe for trains", "Area where points, fixed signals and signalled routes are controlled through an electrical interlock system", "Maximum allowable train speed of a section of track under normal train operation", "Time interval between trains"], "correct": "A declaration made by a Competent Person, an Operations Official or Engineering Official that a section of track is clear of persons, tools and materials and that it is safe for trains"}, {"q": "When a major incident occurs and the Incident Control organisation is introduced, who will be the Incident Engineer?", "options": ["The On-Call Engineer of respective Section", "The Shift Supervisor of Station Maintenance Office", "The Station Maintenance Manager", "The Duty Engineer In-Charge"], "correct": "The Duty Engineer In-Charge"}, {"q": "Which of the following option can be the protection arrangement if staff are required to access tracks where there is limited clearance or no place of safety?", "options": ["Assign an Authorised Staff on the approach side of the worksite at a suitable location", "Arrange an engineering train on the approach side of the worksite (for all lines)", "Assign an Authorized Person on the approach side of the worksite at a suitable location", "Arrange a standing train on the approach side of the worksite (for all lines)"], "correct": "Arrange a standing train on the approach side of the worksite (for all lines)"}, {"q": "What precautions must be taken when staff working on or near tracks?", "options": ["Wear approved high visibility clothing", "Arrange a Handsignalman to protect you", "Inform your supervisor", "Check whether details have been published in the Traffic Notice"], "correct": "Wear approved high visibility clothing"}, {"q": "Who have the control of working parties working on high voltage or traction voltage apparatus or near such apparatus?", "options": ["A duty engineer", "A certified worker", "A Competent Person", "A registered safety officer"], "correct": "A Competent Person"}, {"q": "When it is necessary for a train to be operated in any Restricted Manual mode, which of these statement is true? i. The Train Operator must be alert for any person or obstruction or other hazard on or near the track and be prepared to stop the train immediately ii. At a speed higher than the Restricted Manual mode limit on mainline outside prescribed limits, or in a depot, a second Train Operator must accompany the Train Operator to ensure that train speed does not exceed 40 km/h iii. From other than the leading driving cab, a second Train Operator or a Handsignalman must be located at the leading end, prepared to stop the train in emergency by giving handsignals or using appropriate control device iv. The train operator must also obey any target speed displayed", "options": ["Only ii, iii, IV", "Only i, ii, iv", "Only i, ii, iii", "All the options"], "correct": "Only i, ii, iii"}, {"q": "When work near mainline and connection tracks on Light Rail, if the distance between the worksite and the nearest running rail of any mainline and connection tracks is less than 3 metres, the Rules of work near tracks must be followed unless the worksite is separated from the track by a____or located on a platform.", "options": ["Automatic deluge water spray", "Level crossing", "Permanent barrier", "Temporary barrier"], "correct": "Permanent barrier"}, {"q": "What must each Competent Person in charge ensure when more than one party is to work under the same isolation and earthing arrangements? i. Be given an individual Permit-to-Work (High Voltage and Traction Voltage) ii. Each must apply individual personal padlocks to the appropriate lockout box iii. Have a copy Noise Permission Permit iv. Obtain a Limitation-of-Access (Non-high Voltage and Non-traction Voltage)", "options": ["Only ii, iv", "Only i, ii", "Only i, iv", "Only ii, iii"], "correct": "Only i, ii"}, {"q": "Which of the following Competent Person in charge has the authority to accept an Isolation Record Form? i. Competent Person (Possession) ii. Competent Person (Track) iii. Competent Person (Non-track) iv. Competent Person (Confined Space)", "options": ["Only i & ii", "Only i & iv", "Only ii & iii", "Only iii & iv"], "correct": "Only i & ii"}, {"q": "A short-circuiting of rail potential to the earth or an earthed overhead line equipment or structure will cause large current flow and thermal effect. What precautions must staff take to prevent incident? i. Beware of the existence of rail potential ii. Appoint an Authorized Person to monitor the work at site iii. Not erect any scaffolding under any overhead line equipment iv. Take appropriate precautions to avoid any conductive object bridging the rail and overhead line equipment", "options": ["Only i, iv", "Only ii, iv", "Only i, iii", "Only ii, iii"], "correct": "Only i, iv"}, {"q": "Except in emergency or when local control has been taken, whose consent must be obtained when switching of high voltage equipment, traction voltage equipment or 415V main switch boards?", "options": ["Power System Controller", "Station Controller", "Environmental System Controller", "Operations Official"], "correct": "Power System Controller"}, {"q": "What protection must be arranged by the Competent Person for the pedestrian access work's carried out in a possession involving the working of train at speeds higher that 22 km/h? i. Pedestrian Access Light ii. Track circuit operating clip or \"Close Track\" or \"Work Zone - FAO and CM modes forbidden\" or \"Block Track against route setting\" function applied iii. Red flashing light (engineering work) and track circuit operating clip or \"Close Track\" or \"Work Zone - FAO and CM modes forbidden\" or \"Block Track against route setting\" function applied iv. Red flashing light (engineering work)", "options": ["i", "iii", "ii", "iv"], "correct": "iii"}, {"q": "Please name a person who is qualified to control the movement of trains by means of a handlamp or flags or other approved means, and to set and secure points.", "options": ["Handsignalman", "Depot Operations Controller", "Station Controller", "Lookoutman"], "correct": "Handsignalman"}, {"q": "When should we carry out train brakes test on each occasion to ensure safety?", "options": ["Enter Non-traffic Hours", "Train headlights failure", "Train tail lights failure", "Is to depart from a depot, before passing a depot limit, outlet signal or fixed signal leading to mainline"], "correct": "Is to depart from a depot, before passing a depot limit, outlet signal or fixed signal leading to mainline"}, {"q": "Who is having written approval of the Engineer to effect and supervise isolations as required by the Rules, and to issue and cancel Permits-to-Work and Sanctions-for-Test. The Certificate of Proficiency and Qualification must state the class of work the person is authorised to carry out and the section of the system to which it applies?", "options": ["Competent Person", "Authorized Person", "Qualified Person", "Engineer's Person-in-Charge"], "correct": "Authorized Person"}, {"q": "Who can placed and removed earthing rods and devices used on overhead line equipment?", "options": ["Security guard", "Lookoutman", "Any person", "Staff qualified to do so"], "correct": "Staff qualified to do so"}, {"q": "What is meant by \"Limited Clearance\"?", "options": ["Where clearance is less than 2.8 metres from the nearest mainline", "Place or area within the possession limit", "Place or area near a track where there is insufficient space for a person to stand or walk between a structure and a passing train", "Place or area are within 3.5 metres away from the nearest mainline"], "correct": "Place or area near a track where there is insufficient space for a person to stand or walk between a structure and a passing train"}, {"q": "Which of these handsignals must be regarded as a danger signal requiring a Train Operator to stop the train immediately?", "options": ["A handsignal which is yellow and held steadily", "A white light which is held steadily above head", "A handsignal which is not clearly visible", "A white light which is waved slowly from side to side above head"], "correct": "A handsignal which is not clearly visible"}, {"q": "Which of the following options are not correct for in the event of an emergency requiring traction current to be switched off immediately in a depot Workshop or Maintenance track?", "options": ["Operate an Emergency Trip push button provided on columns or walls beside the track", "Every effort must be made to prevent trains from entering the section, e.g. by display of danger handsignals", "Inform the Station Manager", "Inform the Yard Master"], "correct": "Inform the Station Manager"}, {"q": "To avoid damage or displacement of scotch blocks, vehicles must be brought to a stand not more than _____ to couple to another vehicle.", "options": ["1 metre", "1.3 metres", "1.2 metres", "1.1 metres"], "correct": "1 metre"}, {"q": "When working on the railway, lack of immediate availability and lack of mutual understanding in communications can jeopardise efficiency and safety. What would be the consequence?", "options": ["Fail to complete the work on time", "Dispute among the staff", "Serious incidents", "Traffic jam"], "correct": "Serious incidents"}, {"q": "Who is responsible for taking, supervising and applying full and complete protection arrangements for a Possession?", "options": ["Engineer's Person-in-Charge", "Qualified Person", "Authorized Person", "Competent Person (Possession)"], "correct": "Engineer's Person-in-Charge"}, {"q": "Within a possession, what is the minimum safe braking distance between worksite boundaries and possession boundaries when the Engineer's train uses Restricted Manual Mode or caution speed?", "options": ["30 metres", "20 metres", "40 metres", "50 metres"], "correct": "50 metres"}, {"q": "When isolation and earthing of overhead line equipment is required for the work in depot, the Engineer's Person-in-Charge must ensure the possession area is same as the traction current isolated zone and a distance of not less than ____ metres is maintained between the worksite boundaries and the possession boundaries to provide a safety buffer.", "options": ["5", "6", "3", "4"], "correct": "5"}, {"q": "When using radio for communications, which keyword must be prefaced when pertaining to emergencies?", "options": ["Emergency communication passcode", "Emergency", "Read Back Message", "Mayday"], "correct": "Emergency"}, {"q": "What precaution must be taken by the Engineer's Person-in-Charge so as not to jeopardize the safety of other employees or work party in possession?", "options": ["Check of the exit and entrance of the station", "Check of the Station concouse", "Check of the Depot crossover", "Thorough protection"], "correct": "Thorough protection"}, {"q": "What is the position called which indicated by a fouling point maker or indicator, on a converging, diverging or crossing line beyond which the encroachment of any part of a vehicle would infringe the required passing clearance for a vehicle on the other line?", "options": ["Trap points", "Fouling point", "Common crossing", "Lever crossing"], "correct": "Fouling point"}, {"q": "According to the Railway Safety Rules, which of the following precautions is NOT for prevent accidents?", "options": ["Ensure adequacy of illumination at the worksite, entrance/ exit and emergency escape route and maintain these places in good condition and free of obstructions", "Immediately remove any hazard detected, provided that it is sate to do so", "Ensure that the maximum safe working load of a lifting appliance is not exceeded", "Always work in pain for providing suitable surveillance"], "correct": "Always work in pain for providing suitable surveillance"}, {"q": "Movements within the protection of an individual worksite may be authorised by the ________after reaching a complete understanding with the Engineer's Person-in-Charge.", "options": ["Pilotman", "Lookoutman", "Authorised Person", "Competent Person in charge"], "correct": "Competent Person in charge"}, {"q": "Staff must not remove objects from overhead line equipment unless obtained the authorisation from whom?", "options": ["Station Controller", "Responsible Engineer", "Traffic Controller", "Train Captain"], "correct": "Traffic Controller"}, {"q": "As a Competent Person, you have to convey a long, bulky, heavy or odd-sized article by passenger train, what must you do?", "options": ["Make arrangements with the Traffic Controller", "By using the last passenger train only", "Ask somebody to help you to convey it to the train", "Use a trolley to convey it to the train"], "correct": "Make arrangements with the Traffic Controller"}, {"q": "Work must not be carried out until the apparatus and all conductors which can be touched have been isolated and connected securely to earth. The Authorised Person must ensure what kind of Notice indicating that apparatus is serving as an isolation point which must not be disturbed, are displayed conspicuously at locations where persons may approach the apparatus?", "options": ["Caution Notice", "Danger Notice", "Power Distribution Notice", "Power Supply Notice"], "correct": "Caution Notice"}, {"q": "Prohibit any person on-board from leaving the train before arriving at the worksite. If emergency recovery work for the train has to be carried out and track access is required, communicate with the Train Operator to obtain authorisation from the _______and agree the protection arrangements.", "options": ["Authorized Person or Station Controller", "Station Controller or Yard Master", "Traffic Controller or Engineer's-Person-in-Charge", "Traffic Controller or Yard Master"], "correct": "Traffic Controller or Yard Master"}, {"q": "While on duty, what tools must a Lookoutman be equipped with? i. A red flag/ A hand lamp ii. A yellow flag iii. A horn/whistle iv. A green flag", "options": ["Only i, iii, iv", "Only i, iii", "All the options", "Only i, ii, iii"], "correct": "Only i, iii"}, {"q": "You have to go into a plant room without lighting or emergency lighting. To prevent fall down on an uneven floor, what precautions must you take?", "options": ["Bring a torch", "Use a red flashing light", "Wear uniform", "Have a portable radio"], "correct": "Bring a torch"}, {"q": "For the purpose of the Railway Safety Rules, the requirements stated for Traffic Controller are also applicable to which of the following job positions?", "options": ["System Controller", "Yard Master", "Section Controller", "Station Controller"], "correct": "System Controller"}, {"q": "What duty is performed by Handsignalman by means of a handlamp or flags or other approved means?", "options": ["Control movement of trains", "Conduct risk assessments", "Protect working parties", "Perform crowd control"], "correct": "Control movement of trains"}, {"q": "What is the required minimum distance (metres) allowing staff to go between vehicles or between a buffer stop and the nearest vehicle unless they ensure that the vehicles are not about to be moved and that no shunting is taking place?", "options": ["20", "40", "30", "50"], "correct": "20"}, {"q": "When work on high voltage and traction voltage apparatus, the Authorised Person must ensure all keys to switches and isolators or padlocks used for isolation purposes are placed in a lockout box, who will be responsible to secure the lockout box with a personal padlock and will retain the keys of padlocks throughout the period of work? i. Duty Station Controller ii. Authorised Person from the public iii. Competent Person in charge iv. Traffic Controller", "options": ["Only iii, iv", "Only i, ii", "Only ii, iii", "Only i, iv"], "correct": "Only ii, iii"}, {"q": "Any person who requires access to depot tracks, who must be inform for the details of the work location and nature of work?", "options": ["Train Crew Inspector", "Security Inspector", "Yard Master", "Train Crew Manager"], "correct": "Yard Master"}, {"q": "Last trains to any destination, or connecting to or from a last train from any station at an interchange, must not depart unless the Train Operator has: i. A second Train Operator had been appointed ii. Been instructed by the Traffic Controller iii. Operated in Coded Manual mode iv. Received an all right handsignal from the Station Controller or observed the Close Door Indicator (for East Rail Line)", "options": ["Only i, ii", "Only ii, iv", "Only iii, iv", "Only i, iii"], "correct": "Only ii, iv"}, {"q": "You are staying in a safe location but not working when you see something that may be struck by a train. What must you do first?", "options": ["Ignore it, as it is not your concern", "Shout loudly", "Leave the area at once", "Take steps to stop any train immediately"], "correct": "Take steps to stop any train immediately"}, {"q": "Staff must not fix or attach objects to overhead line equipment unless obtained the autorisation from whom?", "options": ["Train Captain", "Responsible Engineer", "Traffic Controller", "Station Controller"], "correct": "Responsible Engineer"}, {"q": "What does it mean when a Lookoutman waving a red danger signal (or any object) violently?", "options": ["The train operator should stop the train at once", "The train operator will stop the train in front of the signal", "The working party could continue working on the track", "The Person-in-charge should contact the train operator immediately for the sake of safety"], "correct": "The train operator should stop the train at once"}, {"q": "What precautions must be observed when giving Handsignals from a position? i. Must be given at where clearance is not less than 2.8 Meters from the nearest running rail ii. Verbal communication can be maintained between the train operator and the Handsignalman iii. Must be given at where they can be seen clearly iv. Must be given at a distance enabling a train to safely stop at the Handsignals", "options": ["Only i, ii", "Only iii, iv", "Only ii, iii", "Only ii, iv"], "correct": "Only iii, iv"}, {"q": "When requesting authorisation for the work that requires issuance of the Isolation Record Form, who must be provided with the Isolation Record Form number by the Competent Person for verifying the issuance of the form?", "options": ["Station Controller or Traffic Controller", "Traffic Controller or Engineer's Person-in-Charge", "Yard Master or Traffic Controller", "Station Controller or Engineer's Person-in-Charge"], "correct": "Traffic Controller or Engineer's Person-in-Charge"}, {"q": "Which of the following options for the Competent Person must ensure before handling heavy or bulky article?", "options": ["Ensure the concerned staff is a qualified first aider", "Ensure that all members of the working party know the location of canteen", "Inform the Safety Officer", "Instruct staff on safe handling techniques"], "correct": "Instruct staff on safe handling techniques"}, {"q": "When work is to be done at any location, whom must the details normally be submitted for approval?", "options": ["Train Captain", "Security Guard", "Authorising Parties", "Platform Supervisor"], "correct": "Authorising Parties"}, {"q": "Whose authorisation must a Competent Person (Track) first obtain before proceeding onto the depot tracks for work?", "options": ["Engineer's Person-in-charge (EPIC)", "Traffic Controller (TC)", "Yard Master (YM)", "Station Controller (SC)"], "correct": "Yard Master (YM)"}, {"q": "What nature of work must be undertaken within an Engineer's possession when it is carried out on mainline during non-traffic hours?", "options": ["Closure of a station for more than 20 minutes", "Need to be arranged Lookoutman", "Require traction current to remain switched on TWL", "Need to be arranged Authorized Person"], "correct": "Require traction current to remain switched on TWL"}, {"q": "Trains must display white headlights in the front and red tail lights at the rear at all times during movements, in the event of failure of head or tail lights:", "options": ["The train must be withdrawn from service", "A hand lamp or reflective plate must be used", "Assistant train must be arranged", "The Traffic Controller must be arrange additional pilotman to attend"], "correct": "A hand lamp or reflective plate must be used"}, {"q": "For a single worksite with no train or mechanised vehicle working within a possession, the protection of possession must be applied at all possession boundaries by placing Red Flashing Light (Engineering Work). However, exception is permitted if the possession boundary located at where?", "options": ["Loop line", "Platform", "The end of track", "Depot entrance"], "correct": "The end of track"}, {"q": "When there is more than one track on which trains may approach and endanger the working party, how can the Lookoutman warn it of an approaching train?", "options": ["Display a yellow hand signal steadily", "Display green hand signal from side to side across body", "Display yellow hand signal from side to side across body", "Call out the track name or number loudly and clearly"], "correct": "Call out the track name or number loudly and clearly"}, {"q": "Horns or whistle must be used to warn persons by Lookoutman on or near track and a warning must be repeated and the train brought to a stand if: i. Persons on/near a track do not move clear ii. It is a contractor's working party iii. The warning is not acknowledged iv. The warning is acknowledged before persons move clear", "options": ["Only i, ii, iv", "Only i, iii, iv", "Only i, ii, iii", "Only ii, iii, iv"], "correct": "Only i, iii, iv"}, {"q": "What action must be taken by the Engineer's Person-in-Charge on completion of work?", "options": ["Arrange and confirm that red flashing lights (engineering work) are placed at both directions of the possession by a Competent Person", "Prohibit all work party members from leaving", "Arranged Isolation and Earth", "Cancel the Possession Certificate"], "correct": "Cancel the Possession Certificate"}, {"q": "During traffic hours, what must the Competent Person do if there is a need for a working party to cross the mainline in an open section in the course of work? i. Must ensure that there is a place of safety at the departure point of crossing ii. Must ensure that there is a place of safety at the destination point of crossing iii. Must first obtain authorization from the Traffic Controller iv. At his own discretion on when and where to cross the tracks", "options": ["Only ii, iii, iv", "Only i, iii, iv", "Only i, ii, iii", "Only i, ii, iv"], "correct": "Only i, ii, iii"}, {"q": "Under which of the following situations must possession be taken on depot tracks when works is to be done, except use of wheel lathe? i. Makes the track physically unsafe for train ii. Requires an engineer's train to work iii. Involves the mainline and requires the cooperation of Traffic Controller iv. Affects the signalling equipment and may endanger train operations", "options": ["Only ii, iii, iv", "Only i, ii, iii", "Only i, ii, iv", "All the options"], "correct": "Only i, ii, iv"}, {"q": "When work is to be done on low voltage fixed electrical installation except traction voltage equipment, the Person-in-Charge (Low Voltage) of the work must ensure which of the following safety documents is issued by a Responsible Person (Low Voltage), with the equipment isolated, proved dead and earthed (if necessary)?", "options": ["Limitation-of-Access (High Voltage and Traction Voltage)", "Circuit Isolation Certificates", "Permit-to-Work (Low Voltage Fixed Electrical Installation)", "Permit-to-Work (Mechanical)"], "correct": "Permit-to-Work (Low Voltage Fixed Electrical Installation)"}, {"q": "When access to track, all staff must not walk on or near tracks or cross tracks unless they are____and then____. i. Obtain the authorization from Security Inspector ii. Authorisation is obtained iii. Only in the course of their duties or on an authorised route for going to and from duty iv. Obtain the authorization from Authorised Person", "options": ["Only i, ii", "Only i, iv", "Only ii, iii", "Only iii, iv"], "correct": "Only ii, iii"}, {"q": "During non-traffic hours, if traction current requires to be switched off for the work where traction current remains switched on in the adjacent section at one of both ends of the respective isolator(s), which of the following are correct?", "options": ["Lookoutman to be arranged", "A distance of not less than 50 metres must be maintained between the worksite boundaries and the respective isolators to provide a safety buffer", "Need to be arranged Handsignalman", "Reach consensus of Depot Security Inspectors"], "correct": "A distance of not less than 50 metres must be maintained between the worksite boundaries and the respective isolators to provide a safety buffer"}, {"q": "What safety precaution must be taken when an Engineer's Train is to remain stationary for a period or is to be left unattended?", "options": ["Isolation and Earthing must be applied", "Handbrakes and scotch blocks must be applied", "Safety Officer must be informed", "Arrange a Lookoutman for protection"], "correct": "Handbrakes and scotch blocks must be applied"}, {"q": "Who is required to supervise an engineering work on a section of track where possession is not required?", "options": ["Lookoutman", "Fire Marshal", "Handsignalman", "Competent Person"], "correct": "Competent Person"}, {"q": "What do we call a member of Operating Department in Supervisory grade at S10 or S20?", "options": ["Operations Official", "Senior Operations Official", "Engineering Official", "Senior Engineering Official"], "correct": "Operations Official"}, {"q": "Who must be requested immediately when it is necessary to switch off traction current in emergency from a mainline and connection track (outside depot limit)?", "options": ["Train Crew Manager", "Station Manager", "Lookoutman", "Traffic Controller or Power System Controller"], "correct": "Traffic Controller or Power System Controller"}, {"q": "You are required to climb to a height of 4 metres in order to carry out inspection or work, What must you do before starting work?", "options": ["Use proper working platforms or scaffolding", "Receive Limitation-of-Access form", "Ask someone to hold a ladder", "Use radio to keep close contact with the station controller"], "correct": "Use proper working platforms or scaffolding"}, {"q": "Which of the following person(s) can be a leader of a Working Party? i. Engineer's Person In Charge ii. Competent Person iii. Authorized Person iv. Qualified Person", "options": ["All the options", "Only i, ii, iii", "Only i, iii, iv", "Only i, iii"], "correct": "Only i, ii, iii"}, {"q": "On mainline of East Rail Line, what is the minimum clearance from the nearest running rail of any track on which a train may approach?", "options": ["1.9 metres", "1.6 metres", "1.8 metres", "1.7 metres"], "correct": "1.8 metres"}, {"q": "Who must a competent person obtain authorisation from when pedestrian access work is to be done outside possession on mainline during Non-Traffic Hours?", "options": ["Chief of Operating", "Depot Security Inspcetor", "Safety Officer", "Traffic Controller"], "correct": "Traffic Controller"}, {"q": "Except Competent Person, who is appointed by The Engineer's Person-in-Charge to retain the keys to the clamp padlocks until the work is completed?", "options": ["Handsignalman", "Security Inspector", "Engineer", "Station manager"], "correct": "Handsignalman"}, {"q": "Which of the following is NOT a proper way to handle dangerous goods and substances when they are being used and/or used at a worksite?", "options": ["Handled and stored with extreme care in accordance with prescribed safety precautions", "Kept in suitable containers", "Stored at a place with sufficient ventilation", "The container should be properly labelled to indicate classification, particular risks and safety precautions"], "correct": "Stored at a place with sufficient ventilation"}, {"q": "On lines where traction current is switched off during non-traffic hours, what action must be taken by the Competent Person in charge when work is to be done which may take place within the minimum safe distance but which does not involve overhead line equipment?", "options": ["Inform Chief Controller in OCC", "Arrange Station Security to control the access of the worksite", "Test and earth the sections) concerned", "Arrange Handsignalman"], "correct": "Test and earth the sections) concerned"}, {"q": "Three wagons are to be uncoupled from a locomotive and left in position. What precautions must be taken?", "options": ["Only scotch blocks and \"SCOTCH BLOCK\" targets must be applied. No handbrake application is required", "The handbrake on any one of the wagons must be applied", "The handbrakes on all wagons must be applied", "The handbrakes on the outermost wagons must be applied"], "correct": "The handbrakes on the outermost wagons must be applied"}, {"q": "When a pedestrian access work (excluding patrol and inspection) is to be done in an area closer to track than a place of safety, the Competent Person in charge of the worksite must arrange to place a red flashing light (pedestrian access work). At least how many meters away can the red flashing light be seen from approaching direction along the track?", "options": ["2", "15", "5", "50"], "correct": "50"}, {"q": "What is the definition of Consist?", "options": ["Stone chippings used to form the bed of sleeper track", "Device to ensure alertness when a train is driven manually which, when released, causes an emergency brake application", "The number and specific identity of vehicles which comprise a train", "Specific location other than a station at which the limit of a worksite is defined"], "correct": "The number and specific identity of vehicles which comprise a train"}, {"q": "What is the used of a \"Target\"?", "options": ["Block used in securing vehicles or points to prevent movement", "Apparatus for conversion of alternating current to direct current", "Disc displayed on the headstock or driving controls of a vehicle to warn against movement of the vehicle or train concerned", "Valid authority to travel on the railway"], "correct": "Disc displayed on the headstock or driving controls of a vehicle to warn against movement of the vehicle or train concerned"}, {"q": "The Engineer's Person-in-Charge is responsible for all _________ within an Engineer's possession,regardless of the number of worksites.", "options": ["Working party's book on time", "Train movements", "Authorized for switching 415V mains switch boards", "Working party's break time"], "correct": "Train movements"}, {"q": "During traffic hours, staff must not alight from a train at a place where there is limited clearance or cross an adjacent track. In which of the following exception is permitted?", "options": ["On the Disneyland Resort Line", "Protection against train movement has been applied", "Authorisation had been obtained from the Competent Person", "Authorisation has been obtained from the Handsignalman"], "correct": "Protection against train movement has been applied"}, {"q": "Who must a competent person obtain authorisation from when pedestrian access work is to be done within possession on mainline during Non-Traffic Hours?", "options": ["Yard Master", "Engineer's Person-in-Charge", "Authorized Person", "Safety Officer"], "correct": "Engineer's Person-in-Charge"}, {"q": "Whom must obtain authorisation from by the Engineer's Person-in-Charge before taking possession in depot to set up protection?", "options": ["Yard Master", "Safety Officer", "Train Operator", "Security Inspector"], "correct": "Yard Master"}, {"q": "Which kind of point required to be secured in a possession?", "options": ["Controlled trap points within the boundaries of the possession unless the train movements are governed by cab signals or fixed signals", "Unattended point", "Hydraulic mechanical point", "High speed point"], "correct": "Controlled trap points within the boundaries of the possession unless the train movements are governed by cab signals or fixed signals"}, {"q": "If you are going to work in an area where you may be at risk from passing trains, what precautions must you take? i. Give details of the work to the appropriate Traffic Controller ii. Use mobile phone to keep close contact with the Handsignalman iii. Ensure that all members of the working party know the limits of the worksite iv. Request the Station Controller to stop all train movements", "options": ["Only ii, iv", "Only i, iii", "Only i, ii", "Only iii, iv"], "correct": "Only i, iii"}, {"q": "When work carried out on high voltage and traction voltage apparatus, the Authorised Person must ensure that what kind of Notice to indicate conspicuously any live apparatus adjacent to the isolated apparatus?", "options": ["Caution Notice", "Flash Notice", "Danger Notices", "Power Supply Notice"], "correct": "Danger Notices"}, {"q": "If traction current requires to be switched off for the work where traction current remains switched on in the adjacent section at one of both ends of the respective isolator(s), which of the following are correct?", "options": ["A Fire Marshal has been appointed to attendthroughout the period of work", "Reach consensus of Safety Officer", "Need to be arranged Lookoutman", "The worksite boundaries must be clearly indicated by placing red flashing lights (engineering work)"], "correct": "The worksite boundaries must be clearly indicated by placing red flashing lights (engineering work)"}];
+const EXAM_SIZE = 40;
+const PASS_RATIO = 0.7;
+
+document.getElementById('bankTotal').textContent = FULL_BANK.length + ' 題';
+
+let examQuestions = [];   // array of {q, options(shuffled), correct}
+let userAnswers = [];     // array of selected option text or null
+let currentIndex = 0;
+let mode = 'exam';        // 'exam' | 'review'
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildExam(){
+  const pool = shuffle(FULL_BANK).slice(0, EXAM_SIZE);
+  examQuestions = pool.map(item => ({
+    q: item.q,
+    options: shuffle(item.options),
+    correct: item.correct
+  }));
+  userAnswers = new Array(examQuestions.length).fill(null);
+  currentIndex = 0;
+}
+
+function splitQuestion(qtext){
+  const markers = [' i. ', ' ii. ', ' iii. ', ' iv. '];
+  const idxs = markers.map(m => qtext.indexOf(m));
+  if(idxs.some(i => i === -1)) return {main: qtext, subs: null};
+  for(let k=1;k<idxs.length;k++){ if(idxs[k] <= idxs[k-1]) return {main: qtext, subs: null}; }
+  const main = qtext.slice(0, idxs[0]).trim();
+  const subs = [];
+  for(let k=0;k<4;k++){
+    const start = idxs[k] + 1;
+    const end = k < 3 ? idxs[k+1] : qtext.length;
+    subs.push(qtext.slice(start, end).trim());
+  }
+  return {main, subs};
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderQuestion(){
+  const item = examQuestions[currentIndex];
+  const parts = splitQuestion(item.q);
+  document.getElementById('qText').innerHTML = escapeHtml(parts.main);
+  const subsWrap = document.getElementById('qSubs');
+  if(parts.subs){
+    subsWrap.innerHTML = parts.subs.map(line => {
+      const m = line.match(/^(i{1,3}v?)\.\s*(.*)$/);
+      const roman = m ? m[1] : '';
+      const rest = m ? m[2] : line;
+      return '<p class="qsub"><span class="roman">'+escapeHtml(roman)+'.</span>'+escapeHtml(rest)+'</p>';
+    }).join('');
+  } else {
+    subsWrap.innerHTML = '';
+  }
+
+  const qNumEl = document.getElementById('qNum');
+  const isReview = mode === 'review';
+  const ua = userAnswers[currentIndex];
+  const isCorrect = ua === item.correct;
+
+  if(isReview){
+    qNumEl.className = 'qnum ' + (isCorrect ? 'rw-correct' : 'rw-wrong');
+    qNumEl.innerHTML = isCorrect ? '&#10003;' : '&#10005;';
+  } else {
+    qNumEl.className = 'qnum';
+    qNumEl.textContent = currentIndex+1;
+  }
+
+  const wrap = document.getElementById('optsWrap');
+  wrap.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  item.options.forEach((opt, idx) => {
+    const div = document.createElement('div');
+    let cls = 'opt';
+    let markHtml = '';
+
+    if(isReview){
+      cls += ' readonly';
+      if(opt === item.correct){
+        cls += ' correct-answer';
+        markHtml = '<span class="mark mk-correct">&#10003;</span>';
+      } else if(opt === ua){
+        cls += ' wrong-selected';
+        markHtml = '<span class="mark mk-wrong">&#10005;</span>';
+      }
+    } else {
+      if(ua === opt) cls += ' selected';
+    }
+
+    div.className = cls;
+    div.innerHTML = '<div class="letter">'+letters[idx]+'</div><div class="otext">'+escapeHtml(opt)+'</div>'+markHtml;
+
+    if(!isReview){
+      div.onclick = () => {
+        userAnswers[currentIndex] = opt;
+        renderQuestion();
+      };
+    }
+    wrap.appendChild(div);
+  });
+
+  document.getElementById('prevBtn').disabled = currentIndex===0;
+  document.getElementById('nextBtn').disabled = currentIndex===examQuestions.length-1;
+  document.getElementById('bodyScroll').scrollTop = 0;
+  renderPills();
+  if(!isReview) updateFinishBtnState();
+}
+
+function updateFinishBtnState(){
+  const allAnswered = userAnswers.every(a => a!==null);
+  document.getElementById('finishBtn').classList.toggle('enabled', allAnswered);
+}
+
+function showConfirm(message, onOk){
+  const overlay = document.getElementById('modalOverlay');
+  document.getElementById('modalMsg').textContent = message;
+  overlay.classList.remove('hidden');
+  const okBtn = document.getElementById('modalOk');
+  const cancelBtn = document.getElementById('modalCancel');
+  function cleanup(){
+    overlay.classList.add('hidden');
+    okBtn.onclick = null;
+    cancelBtn.onclick = null;
+  }
+  okBtn.onclick = () => { cleanup(); onOk(); };
+  cancelBtn.onclick = () => { cleanup(); };
+}
+
+function renderPills(){
+  const wrap = document.getElementById('pills');
+  wrap.innerHTML = '';
+  const isReview = mode === 'review';
+  examQuestions.forEach((item, i) => {
+    const p = document.createElement('div');
+    let cls = 'pill';
+    if(isReview){
+      const correct = userAnswers[i] === item.correct;
+      cls += correct ? ' rw-correct' : ' rw-wrong';
+      if(i===currentIndex) cls += ' rw-current';
+    } else {
+      if(i===currentIndex) cls += ' current';
+      else if(userAnswers[i]!==null) cls += ' answered';
+    }
+    p.className = cls;
+    p.textContent = i+1;
+    p.onclick = () => { currentIndex = i; renderQuestion(); };
+    wrap.appendChild(p);
+  });
+}
+
+function goto(delta){
+  currentIndex = Math.max(0, Math.min(examQuestions.length-1, currentIndex+delta));
+  renderQuestion();
+}
+
+document.getElementById('prevBtn').onclick = () => goto(-1);
+document.getElementById('nextBtn').onclick = () => goto(1);
+
+document.getElementById('backBtn').onclick = () => {
+  if(mode === 'review'){
+    document.getElementById('examScreen').classList.add('hidden');
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('resultScreen').classList.remove('hidden');
+    return;
+  }
+  showConfirm('返回主頁會放棄現時作答進度，確定要返回嗎？\n(Going back will discard your current progress. Continue?)', () => {
+    document.getElementById('examScreen').classList.add('hidden');
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('startScreen').classList.remove('hidden');
+  });
+};
+
+document.getElementById('startBtn').onclick = () => {
+  mode = 'exam';
+  buildExam();
+  enterExamHeader();
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('examScreen').classList.remove('hidden');
+  document.getElementById('examScreen').style.display = 'flex';
+  renderQuestion();
+};
+
+function enterExamHeader(){
+  document.getElementById('hdrTitle').textContent = 'AOSDS 考試';
+  document.getElementById('hdrSubtitle').textContent = 'AOSDS Examination';
+  document.getElementById('backBtnLbl').textContent = '返回';
+  document.getElementById('finishBtn').classList.remove('hidden');
+}
+
+function enterReviewHeader(){
+  document.getElementById('hdrTitle').textContent = '作答回顧';
+  document.getElementById('hdrSubtitle').textContent = 'Answer Review';
+  document.getElementById('backBtnLbl').textContent = '結果';
+  document.getElementById('finishBtn').classList.add('hidden');
+}
+
+document.getElementById('finishBtn').onclick = () => {
+  const answered = userAnswers.filter(a=>a!==null).length;
+  if(answered < examQuestions.length){
+    showConfirm('仲有 '+(examQuestions.length-answered)+' 題未作答，確定要交卷嗎？\n('+(examQuestions.length-answered)+' question(s) unanswered. Submit anyway?)', () => {
+      showResult();
+    });
+    return;
+  }
+  showResult();
+};
+
+function showResult(){
+  let correctCount = 0;
+  examQuestions.forEach((item,i) => { if(userAnswers[i]===item.correct) correctCount++; });
+  const pct = Math.round((correctCount/examQuestions.length)*100);
+  const passed = correctCount/examQuestions.length >= PASS_RATIO;
+
+  document.getElementById('examScreen').classList.add('hidden');
+  document.getElementById('examScreen').style.display = 'none';
+  document.getElementById('resultScreen').classList.remove('hidden');
+
+  document.getElementById('scoreBig').textContent = correctCount+'/'+examQuestions.length;
+  document.getElementById('scoreBig').className = 'score-big ' + (passed?'pass':'fail');
+  document.getElementById('badge').textContent = passed ? '合格 PASS' : '不合格 FAIL';
+  document.getElementById('badge').className = 'badge ' + (passed?'pass':'fail');
+  document.getElementById('scorePct').textContent = '得分率 '+pct+'%　(合格線 70%)';
+}
+
+document.getElementById('reviewBtn').onclick = () => {
+  mode = 'review';
+  currentIndex = 0;
+  enterReviewHeader();
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('examScreen').classList.remove('hidden');
+  document.getElementById('examScreen').style.display = 'flex';
+  renderQuestion();
+};
+
+document.getElementById('retryBtn').onclick = () => {
+  mode = 'exam';
+  document.getElementById('resultScreen').classList.add('hidden');
+  buildExam();
+  enterExamHeader();
+  document.getElementById('examScreen').classList.remove('hidden');
+  document.getElementById('examScreen').style.display = 'flex';
+  renderQuestion();
+};
+</script>
+</body>
+</html>
